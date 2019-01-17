@@ -59,7 +59,7 @@ var G, data; // establish global namespace
  var ypos = 0; // y-pos of sprite
 
  var floorPlane = 0;
- var actorPlane = 1;
+ var actorPlane = 6;
 
  var path = null; // path to follow, null if none
  var step = 0; // current step on path
@@ -100,6 +100,62 @@ var G, data; // establish global namespace
  }
  }
 
+ function drawCircle (x0, y0, radius, canvas) {
+  var ripplePlane = 5;
+ 	var x = radius-1;
+ 	var y = 0;
+ 	var dx = 1;
+ 	var dy = 1;
+ 	var diameter = radius * 2;
+ 	var decisionOver2 = dx - diameter;   // Decision criterion divided by 2 evaluated at x=r, y=0
+ 	var imageWidth = G.width;
+ 	var imageHeight = G.height;
+ 	var context = canvas.getContext('2d');
+ 	var imageData = context.getImageData(0, 0, imageWidth, imageHeight);
+ 	var pixelData = imageData.data;
+ 	var makePixelIndexer = function (width) { // Not sure what this is - PL
+ 		return function (i, j) {
+ 			var index = CHANNELS_PER_PIXEL * (j * width + i);
+ 			//index points to the Red channel of pixel
+ 			//at column i and row j calculated from top left
+ 			return index;
+ 		};
+ 	};
+ 	var pixelIndexer = makePixelIndexer(imageWidth);
+ 	var drawPixel = function (x, y) {
+ 		var idx = pixelIndexer(x,y);
+ 		pixelData[idx] = 255;	//red
+ 		pixelData[idx + 1] = 0;	//green
+ 		pixelData[idx + 2] = 255;//blue
+ 		pixelData[idx + 3] = 255;//alpha
+ 	};
+
+ 	while (x >= y) {
+ 		drawPixel(x + x0, y + y0);
+ 		drawPixel(y + x0, x + y0);
+ 		drawPixel(-x + x0, y + y0);
+ 		drawPixel(-y + x0, x + y0);
+ 		drawPixel(-x + x0, -y + y0);
+ 		drawPixel(-y + x0, -x + y0);
+ 		drawPixel(x + x0, -y + y0);
+ 		drawPixel(y + x0, -x + y0);
+ 		if (decisionOver2 <= 0)
+ 		{
+ 		    y++;
+ 			decisionOver2 += dy; // Change in decision criterion for y -> y+1
+ 			dy += 2;
+ 		}
+ 		if (decisionOver2 > 0)
+ 		{
+ 			x--;
+ 			dx += 2;
+ 			decisionOver2 += (-diameter) + dx; // Change for y -> y+1, x -> x-1
+ 		}
+ 	}
+
+ 	context.putImageData(imageData, 0, 0);
+ }
+
  G = {
  width : 32, // width of grid
  height : 32, // height of grid
@@ -109,7 +165,7 @@ var G, data; // establish global namespace
  drawMap : function () {
  var x, y, val;
 
- // Create random pink floor
+ // Create random blue ocean floor
 
  PS.gridPlane( floorPlane );
  for ( y = 0; y < G.height; y += 1 ) {
@@ -121,7 +177,7 @@ var G, data; // establish global namespace
  }
  }
 
- // Create 1x1 solid green sprite
+ // Create 1x1 solid white sprite
  // Place on plane 1 in center of grid
 
  id = PS.spriteSolid( 1, 1 );
@@ -188,16 +244,16 @@ PS.init = function( system, options ) {
 	// change the string parameter as needed.
 
 	// Add any other initialization code you need here.
- var myLoader;
+ // var myLoader;
 
  // Image loading function
  // Called when image loads successfully
  // [data] parameter will contain imageData
 
- var myLoader = function ( imageData ){
- var data;
- data = imageData;
- var x, y, ptr, color;
+ // var myLoader = function ( imageData ){
+ // var data;
+ // data = imageData;
+ // var x, y, ptr, color;
 
  // Report imageData in debugger
 
@@ -224,9 +280,9 @@ PS.init = function( system, options ) {
 
  // Load image in format 1
 
- PS.imageLoad( "fish.bmp", myLoader, 1 );
- PS.gridPlane(3);
- PS.imageBlit( data, 0, 0);
+ // PS.imageLoad( "fish.bmp", myLoader, 1 );
+ // PS.gridPlane(3);
+ // PS.imageBlit( data, 0, 0);
  	PS.statusText( "Hover mouse over grid" );
 };
 
