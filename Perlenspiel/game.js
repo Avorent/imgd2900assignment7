@@ -100,67 +100,74 @@ var G, data; // establish global namespace
  }
  }
 
- function drawCircle (x0, y0, radius, canvas) {
-  var ripplePlane = 5;
- 	var x = radius-1;
- 	var y = 0;
- 	var dx = 1;
- 	var dy = 1;
- 	var diameter = radius * 2;
- 	var decisionOver2 = dx - diameter;   // Decision criterion divided by 2 evaluated at x=r, y=0
- 	var imageWidth = G.width;
- 	var imageHeight = G.height;
- 	var context = canvas.getContext('2d');
- 	var imageData = context.getImageData(0, 0, imageWidth, imageHeight);
- 	var pixelData = imageData.data;
- 	var makePixelIndexer = function (width) { // Not sure what this is - PL
- 		return function (i, j) {
- 			var index = CHANNELS_PER_PIXEL * (j * width + i);
- 			//index points to the Red channel of pixel
- 			//at column i and row j calculated from top left
- 			return index;
- 		};
- 	};
- 	var pixelIndexer = makePixelIndexer(imageWidth);
- 	var drawPixel = function (x, y) {
- 		var idx = pixelIndexer(x,y);
- 		pixelData[idx] = 255;	//red
- 		pixelData[idx + 1] = 0;	//green
- 		pixelData[idx + 2] = 255;//blue
- 		pixelData[idx + 3] = 255;//alpha
- 	};
-
- 	while (x >= y) {
- 		drawPixel(x + x0, y + y0);
- 		drawPixel(y + x0, x + y0);
- 		drawPixel(-x + x0, y + y0);
- 		drawPixel(-y + x0, x + y0);
- 		drawPixel(-x + x0, -y + y0);
- 		drawPixel(-y + x0, -x + y0);
- 		drawPixel(x + x0, -y + y0);
- 		drawPixel(y + x0, -x + y0);
- 		if (decisionOver2 <= 0)
- 		{
- 		    y++;
- 			decisionOver2 += dy; // Change in decision criterion for y -> y+1
- 			dy += 2;
- 		}
- 		if (decisionOver2 > 0)
- 		{
- 			x--;
- 			dx += 2;
- 			decisionOver2 += (-diameter) + dx; // Change for y -> y+1, x -> x-1
- 		}
- 	}
-
- 	context.putImageData(imageData, 0, 0);
+ var drawPixel = function (x, y) {
+   if(x <= G.width && y <=G.height){
+   PS.color(x, y);
+  }
  }
+
+ var drawCirle = function (x0, y0, radius) {
+   var ripplePlane = 4;
+   var x = radius;
+   var y = 0;
+   var radiusError = 1 - x;
+
+   while (x >= y) {
+     drawPixel(x + x0, y + y0);
+     drawPixel(y + x0, x + y0);
+     drawPixel(-x + x0, y + y0);
+     drawPixel(-y + x0, x + y0);
+     drawPixel(-x + x0, -y + y0);
+     drawPixel(-y + x0, -x + y0);
+     drawPixel(x + x0, -y + y0);
+     drawPixel(y + x0, -x + y0);
+     y++;
+
+     if (radiusError < 0) {
+         radiusError += 2 * y + 1;
+     }
+     else {
+         x--;
+         radiusError+= 2 * (y - x + 1);
+     }
+   }
+ };
+
+ // var ripple = function(x, y){ // Start a ripple waveat x and y coordinates
+
+// };
 
  G = {
  width : 32, // width of grid
  height : 32, // height of grid
 
  // Draw floor and initialize sprite
+ drawCirle : function (x0, y0, radius) {
+   PS.gridPlane(5);
+   var x = radius;
+   var y = 0;
+   var radiusError = 1 - x;
+
+   while (x >= y) {
+     drawPixel(x + x0, y + y0);
+     drawPixel(y + x0, x + y0);
+     drawPixel(-x + x0, y + y0);
+     drawPixel(-y + x0, x + y0);
+     drawPixel(-x + x0, -y + y0);
+     drawPixel(-y + x0, -x + y0);
+     drawPixel(x + x0, -y + y0);
+     drawPixel(y + x0, -x + y0);
+     y++;
+
+     if (radiusError < 0) {
+         radiusError += 2 * y + 1;
+     }
+     else {
+         x--;
+         radiusError+= 2 * (y - x + 1);
+     }
+   }
+ },
 
  drawMap : function () {
  var x, y, val;
@@ -212,6 +219,9 @@ var G, data; // establish global namespace
 
 
  }
+
+ // drawCircle
+ //draws a circle
  };
 }() );
 
@@ -256,12 +266,12 @@ PS.init = function( system, options ) {
  // var x, y, ptr, color;
 
  // Report imageData in debugger
-
- PS.debug( "Loaded " + imageData.source +
- ":\nid = " + imageData.id +
- "\nwidth = " + imageData.width +
- "\nheight = " + imageData.height +
- "\nformat = " + imageData.pixelSize + "\n" );
+ //
+ // PS.debug( "Loaded " + imageData.source +
+ // ":\nid = " + imageData.id +
+ // "\nwidth = " + imageData.width +
+ // "\nheight = " + imageData.height +
+ // "\nformat = " + imageData.pixelSize + "\n" );
 
  // Extract colors from imageData and
  // assign them to the beads
@@ -275,8 +285,6 @@ PS.init = function( system, options ) {
  // }
  // }
  // };
-
- PS.border( PS.ALL, PS.ALL, 0 ); // no borders
 
  // Load image in format 1
 
@@ -327,12 +335,14 @@ PS.touch = function( h, k, data, options ) {
  // // Blit image to grid at center
  //
  // PS.imageBlit( data, 0, 0);
- };
+ // };
   // PS.imageLoad( "fish.bmp", myLoader,1);
 	// PS.debug( "PS.touch() @ " + h + ", " + k + "\n" );
 
 	// Add code here for mouse clicks/touches
 	// over a bead.
+
+  G.drawCirle(h, k, 5);
 };
 
 
