@@ -59,7 +59,6 @@ var G, data; // establish global namespace
  var ypos = 0; // y-pos of sprite
 
  var floorPlane = 0;
- var actorPlane = 6;
 
  var path = null; // path to follow, null if none
  var step = 0; // current step on path
@@ -68,7 +67,10 @@ var G, data; // establish global namespace
 
  function tick () {
  var p, nx, ny;
-
+ // var radiusBeforeDivision;
+ // var radius;
+ // radius = math.floor(radiusBeforeDivision/radius);
+ // G.drawCircle(x, y, radius);
  if ( path ) { // path ready (not null)?
  // Get next point on path
 
@@ -90,8 +92,9 @@ var G, data; // establish global namespace
  xpos = nx; // update xpos
  ypos = ny; // and ypos
 
- step += 1; // point to next step
-
+ if(path.length > 3){
+ step += 3; // point to next step
+} else { step+= 1}
  // If no more steps, nuke path
 
  if ( step >= path.length ) {
@@ -100,38 +103,39 @@ var G, data; // establish global namespace
  }
  }
 
- var drawPixel = function (x, y) {
-   if(x <= G.width && y <=G.height){
-   PS.color(x, y);
-  }
- }
+ // var drawPixel = function (x, y) {
+ //   if(x <= G.width && y <=G.height){
+ //    PS.gridPlane(5);
+ //   PS.color(x, y, PS.COLOR_RED);
+ //  }
+ // }
 
- var drawCirle = function (x0, y0, radius) {
-   var ripplePlane = 4;
-   var x = radius;
-   var y = 0;
-   var radiusError = 1 - x;
-
-   while (x >= y) {
-     drawPixel(x + x0, y + y0);
-     drawPixel(y + x0, x + y0);
-     drawPixel(-x + x0, y + y0);
-     drawPixel(-y + x0, x + y0);
-     drawPixel(-x + x0, -y + y0);
-     drawPixel(-y + x0, -x + y0);
-     drawPixel(x + x0, -y + y0);
-     drawPixel(y + x0, -x + y0);
-     y++;
-
-     if (radiusError < 0) {
-         radiusError += 2 * y + 1;
-     }
-     else {
-         x--;
-         radiusError+= 2 * (y - x + 1);
-     }
-   }
- };
+// var drawCircle = function (x0, y0, radius) {
+//    PS.gridPlane(5);
+//    var x = radius;
+//    var y = 0;
+//    var radiusError = 1 - x;
+//
+//    while (x >= y) {
+//      PS.color(x + x0, y + y0);
+//      PS.color(y + x0, x + y0);
+//      PS.color(-x + x0, y + y0);
+//      PS.color(-y + x0, x + y0);
+//      PS.color(-x + x0, -y + y0);
+//      PS.color(-y + x0, -x + y0);
+//      PS.color(x + x0, -y + y0);
+//      PS.color(y + x0, -x + y0);
+//      y++;
+//
+//      if (radiusError < 0) {
+//          radiusError += 2 * y + 1;
+//      }
+//      else {
+//          x--;
+//          radiusError+= 2 * (y - x + 1);
+//      }
+//    }
+//  };
 
  // var ripple = function(x, y){ // Start a ripple waveat x and y coordinates
 
@@ -140,23 +144,27 @@ var G, data; // establish global namespace
  G = {
  width : 32, // width of grid
  height : 32, // height of grid
-
+ drawPixel : function (x, y, plane) {
+   if(x < G.width && y < G.height && x >= 0 && y >= 0 ){
+   PS.gridPlane(plane);
+   PS.alpha(x, y, 255);
+  }
+},
  // Draw floor and initialize sprite
- drawCirle : function (x0, y0, radius) {
-   PS.gridPlane(5);
+ drawCircle : function (x0, y0, radius, plane) {
    var x = radius;
    var y = 0;
    var radiusError = 1 - x;
 
    while (x >= y) {
-     drawPixel(x + x0, y + y0);
-     drawPixel(y + x0, x + y0);
-     drawPixel(-x + x0, y + y0);
-     drawPixel(-y + x0, x + y0);
-     drawPixel(-x + x0, -y + y0);
-     drawPixel(-y + x0, -x + y0);
-     drawPixel(x + x0, -y + y0);
-     drawPixel(y + x0, -x + y0);
+     G.drawPixel(x + x0, y + y0, plane);
+     G.drawPixel(y + x0, x + y0, plane);
+     G.drawPixel(-x + x0, y + y0, plane);
+     G.drawPixel(-y + x0, x + y0, plane);
+     G.drawPixel(-x + x0, -y + y0, plane);
+     G.drawPixel(-y + x0, -x + y0, plane);
+     G.drawPixel(x + x0, -y + y0, plane);
+     G.drawPixel(y + x0, -x + y0, plane);
      y++;
 
      if (radiusError < 0) {
@@ -168,7 +176,13 @@ var G, data; // establish global namespace
      }
    }
  },
-
+ // drawRipple : function( x, y ){
+ //   for(i=0, i<32, i++){
+ //     var r =
+ //     G.drawCircle(x, y, i)
+ //   }
+ //
+ // },
  drawMap : function () {
  var x, y, val;
 
@@ -183,42 +197,11 @@ var G, data; // establish global namespace
  PS.color( x, y, val1, val2, val3);
  }
  }
-
- // Create 1x1 solid white sprite
- // Place on plane 1 in center of grid
-
- id = PS.spriteSolid( 1, 1 );
- PS.spriteSolidColor( id, PS.COLOR_WHITE );
- PS.spritePlane( id, actorPlane );
- PS.spriteMove( id, xpos, ypos );
-
- // Start the timer function
- // Run at 60 frames/sec (every x ticks)
-
- PS.timerStart( 1, tick );
- },
+ }
 
  // move( x, y )
  // Set up new path
 
- move : function ( x, y ) {
- var line;
-
- // Calc a line from current position
- // to touched position
-
- line = PS.line( xpos, ypos, x, y );
-
- // If line is not empty,
- // make it the new path
-
- if ( line.length > 0 ) {
- path = line;
- step = 0; // start at beginning
- }
-
-
- }
 
  // drawCircle
  //draws a circle
@@ -245,6 +228,7 @@ PS.init = function( system, options ) {
 	PS.gridSize( G.width, G.height ); // init grid
 	PS.border( PS.ALL, PS.ALL, 0 ); // no borders
 	// PS.radius( PS.ALL, PS.ALL, 50 ); // circle
+  PS.gridColor
 	G.drawMap(); // init walls & sprite
 
 	// This is also a good place to display
@@ -291,7 +275,7 @@ PS.init = function( system, options ) {
  // PS.imageLoad( "fish.bmp", myLoader, 1 );
  // PS.gridPlane(3);
  // PS.imageBlit( data, 0, 0);
- 	PS.statusText( "Hover mouse over grid" );
+ 	PS.statusText( "Tap the screen to create ripples!" );
 };
 
 /*
@@ -308,7 +292,7 @@ This function doesn't have to do anything. Any value returned is ignored.
 
 
 
-PS.touch = function( h, k, data, options ) {
+PS.touch = function( x, y, data, options ) {
 	"use strict"; // Do not remove this directive!
 
 	// Uncomment the following code line
@@ -317,32 +301,29 @@ PS.touch = function( h, k, data, options ) {
   //   for()
   // };
 
- // var myLoader = function ( imageData ) {
- // data = imageData; // save data for later
- //
- // PS.debug( "Loaded " + data.source +
- // ":\nid = " + data.id +
- // "\nwidth = " + data.width +
- // "\nheight = " + data.height +
- // "\nformat = " + data.pixelSize + "\n" );
- //
- // // Calculate minimum x/y positions that will
- // // keep image on the grid
- //
- // xmin = 0 - ( data.width - G.width );
- // ymin = 0 - ( data.height - G.height );
- //
- // // Blit image to grid at center
- //
- // PS.imageBlit( data, 0, 0);
- // };
-  // PS.imageLoad( "fish.bmp", myLoader,1);
-	// PS.debug( "PS.touch() @ " + h + ", " + k + "\n" );
 
 	// Add code here for mouse clicks/touches
 	// over a bead.
+  var myTimerID = PS.timerStart(1,myTimer)
+  var startingRadius = 0;
+  var plane = 2 + x + 32 * y;
+  var myCounter = 0;
+function myTimer() {
+  if (myCounter == startingRadius && myCounter < 45){
+    PS.gridPlane( plane );
+    PS.alpha(PS.ALL, PS.ALL, 0);
+    myCounter++;
+  }
+  else if ( myCounter < 45 ) {
+    G.drawCircle(x,y,myCounter, plane);
+    startingRadius++;
+  }
+ else {
+ PS.timerStop( myTimerID ); // stop timer
+ }
 
-  G.drawCirle(h, k, 5);
+};
+  // G.drawCircle(x, y, 5);
 };
 
 
@@ -359,11 +340,12 @@ This function doesn't have to do anything. Any value returned is ignored.
 
 // UNCOMMENT the following code BLOCK to expose the PS.release() event handler:
 
-/*
+
 
 PS.release = function( x, y, data, options ) {
 	"use strict"; // Do not remove this directive!
-
+  PS.gridPlane(1);
+  PS.alpha(x, y, 0);
 	// Uncomment the following code line to inspect x/y parameters:
 
 	// PS.debug( "PS.release() @ " + x + ", " + y + "\n" );
@@ -371,7 +353,7 @@ PS.release = function( x, y, data, options ) {
 	// Add code here for when the mouse button/touch is released over a bead.
 };
 
-*/
+
 
 /*
 PS.enter ( x, y, button, data, options )
@@ -389,7 +371,8 @@ This function doesn't have to do anything. Any value returned is ignored.
 
 PS.enter = function( x, y, data, options ) {
 	"use strict"; // Do not remove this directive!
-	G.move( x, y );
+  PS.gridPlane(1)
+	PS.alpha(x, y, 255);
 	// Uncomment the following code line to inspect x/y parameters:
 
 	// PS.debug( "PS.enter() @ " + x + ", " + y + "\n" );
@@ -411,11 +394,12 @@ This function doesn't have to do anything. Any value returned is ignored.
 
 // UNCOMMENT the following code BLOCK to expose the PS.exit() event handler:
 
-/*
+
 
 PS.exit = function( x, y, data, options ) {
 	"use strict"; // Do not remove this directive!
-
+  PS.gridPlane(1);
+  PS.alpha(x, y, 0);
 	// Uncomment the following code line to inspect x/y parameters:
 
 	// PS.debug( "PS.exit() @ " + x + ", " + y + "\n" );
@@ -423,7 +407,7 @@ PS.exit = function( x, y, data, options ) {
 	// Add code here for when the mouse cursor/touch exits a bead.
 };
 
-*/
+
 
 /*
 PS.exitGrid ( options )
