@@ -228,9 +228,20 @@ PS.init = function( system, options ) {
 	PS.gridSize( G.width, G.height ); // init grid
 	PS.border( PS.ALL, PS.ALL, 0 ); // no borders
 	// PS.radius( PS.ALL, PS.ALL, 50 ); // circle
-  PS.gridColor
+  PS.gridColor( 170, 170,240);
 	G.drawMap(); // init walls & sprite
 
+  var myImage, mySprite;
+
+ PS.imageLoad( "fish.png", function (data) {
+  myImage = data; // save image ID
+
+  // Create an image sprite from the loaded image
+  // Save sprite ID for later reference
+  mySprite = PS.spriteImage( myImage );
+  PS.spriteMove( mySprite, 3, 3);
+  PS.spritePlane( mySprite, 0);
+ } );
 	// This is also a good place to display
 	// your game title or a welcome message
 	// in the status line above the grid.
@@ -276,6 +287,8 @@ PS.init = function( system, options ) {
  // PS.gridPlane(3);
  // PS.imageBlit( data, 0, 0);
  	PS.statusText( "Tap the screen to create ripples!" );
+  PS.audioLoad( "fx_drip1" );
+  PS.audioLoad( "fx_drip2" );
 };
 
 /*
@@ -304,6 +317,8 @@ PS.touch = function( x, y, data, options ) {
 
 	// Add code here for mouse clicks/touches
 	// over a bead.
+  PS.statusText( "Bloop!" );
+  PS.audioPlay( "fx_drip1" );
   var myTimerID = PS.timerStart(1,myTimer)
   var startingRadius = 0;
   var plane = 2 + x + 32 * y;
@@ -323,6 +338,8 @@ function myTimer() {
  }
 
 };
+
+
   // G.drawCircle(x, y, 5);
 };
 
